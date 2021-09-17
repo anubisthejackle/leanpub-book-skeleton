@@ -46,7 +46,7 @@ function parse_chapter( $files, $chapter ) {
         list( $scene, $scene_number ) = explode( '_', $file );
         $scene_number = (int)str_replace( '.md', '', $scene_number );
 
-        $scenes[ $scene_number ] = file_get_contents( './draft' . DIRECTORY_SEPARATOR . 'chapter_' . $chapter . DIRECTORY_SEPARATOR . $file );
+        $scenes[] = file_get_contents( './draft' . DIRECTORY_SEPARATOR . 'chapter_' . $chapter . DIRECTORY_SEPARATOR . $file );
     }
 
     return $scenes;
@@ -76,7 +76,7 @@ function write_chapters( $chapters ) {
         file_put_contents( './manuscript/Chapter ' . $chapter_number, '# Chapter ' . $chapter_number . PHP_EOL . PHP_EOL );
 
         foreach( $scenes as $scene_number => $scene ) {
-            if( $scene_number > 1 ) {
+            if( $scene_number > 0 ) {
                 $flags = FILE_APPEND;
                 file_put_contents( './manuscript/Chapter ' . $chapter_number, PHP_EOL . PHP_EOL . '* * *' . PHP_EOL . PHP_EOL, FILE_APPEND );
             }
