@@ -12,3 +12,5 @@ This skeleton is a work in progress.
 ## Building Drafts
 
 To build a draft, run `./bin/build` from the root of the repository.
+
+NOTE: All changes should be made in the drafts folder. The manuscript directory is generated VIA the build script, and changes may not persist.
