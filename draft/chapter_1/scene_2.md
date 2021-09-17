@@ -1,0 +1,1 @@
+This is the second scene of the chapter. We do not need to do anything special to denote separation of the scenes, as this is a distinct file.
