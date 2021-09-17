@@ -1,0 +1,94 @@
+#!/usr/bin/php
+<?php
+/**
+ * Version: 0.1
+ * Description:
+ * Used to build the Leanpub version of my book from the draft folder.
+ */
+
+if( ! is_dir( './draft' ) || ! is_dir( './manuscript' ) ) {
+    echo "Error: This script must be run from the root of the book repository. Both the draft and manuscript directories are required.";
+    die;
+}
+
+// Get draft directory contents without "current directory" or "up level" records.
+$draft = array_filter( scandir( './draft' ), 'strip_dot_dirs' );
+
+$chapters = [];
+clear_old_files();
+foreach( $draft as $record ) {
+    if( ! is_dir( './draft' . DIRECTORY_SEPARATOR . $record ) ) {
+        var_dump( './draft' . DIRECTORY_SEPARATOR . $record );
+        continue;
+    }
+
+    $files = array_filter( scandir( './draft' . DIRECTORY_SEPARATOR . $record ), 'strip_dot_dirs' );
+    $chapter = str_replace( 'chapter_', '', $record );
+    $chapters[ $chapter ] = parse_chapter( $files, $chapter );
+}
+
+write_chapters( $chapters );
+
+function strip_dot_dirs($record) { 
+    return ! ( $record === '.' || $record === '..'); 
+}
+
+function parse_chapter( $files, $chapter ) {
+
+    $scenes = [];
+    foreach( $files as $file ) {
+        if( parse_meta($file, $chapter) ) {
+            // If this is the meta.json file, and not a chapter, do the parsing, and skip.
+            continue;
+        }
+
+        // Copy existing scenes into an array
+        list( $scene, $scene_number ) = explode( '_', $file );
+        $scene_number = (int)str_replace( '.md', '', $scene_number );
+
+        $scenes[ $scene_number ] = file_get_contents( './draft' . DIRECTORY_SEPARATOR . 'chapter_' . $chapter . DIRECTORY_SEPARATOR . $file );
+    }
+
+    return $scenes;
+}
+
+function parse_meta( $file, $chapter ) {
+    if( $file !== 'meta.json' ) {
+        return false;
+    }
+
+    $meta = file_get_contents( './draft' . DIRECTORY_SEPARATOR . 'chapter_' . $chapter . DIRECTORY_SEPARATOR . $file );
+    $meta = json_decode( $meta );
+    
+    file_put_contents( './manuscript/Book.txt', $meta->title . PHP_EOL , FILE_APPEND );
+
+    return true;
+}
+
+function write_chapters( $chapters ) {
+    if( ! is_array( $chapters ) ) {
+        return;
+    }
+
+    foreach( $chapters as $chapter_number => $scenes ) {
+        
+        // Write the opening line of the chapter
+        file_put_contents( './manuscript/Chapter ' . $chapter_number, '# Chapter ' . $chapter_number . PHP_EOL . PHP_EOL );
+
+        foreach( $scenes as $scene_number => $scene ) {
+            if( $scene_number > 1 ) {
+                $flags = FILE_APPEND;
+                file_put_contents( './manuscript/Chapter ' . $chapter_number, PHP_EOL . PHP_EOL . '* * *' . PHP_EOL . PHP_EOL, FILE_APPEND );
+            }
+
+            file_put_contents( './manuscript/Chapter ' . $chapter_number, $scene, FILE_APPEND );
+        }
+    }
+}
+
+function clear_old_files() {
+    $files = array_filter( scandir( './manuscript' ), 'strip_dot_dirs' );
+    foreach( $files as $file ){
+        unlink( './manuscript/' . $file );
+    }
+}
